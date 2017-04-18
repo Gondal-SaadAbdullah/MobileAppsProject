@@ -56,11 +56,11 @@
                         <viewControllerLayoutGuide type="top" id="10Y-Tp-fy2"/>
                         <viewControllerLayoutGuide type="bottom" id="irj-0H-Q0u"/>
                     </layoutGuides>
-                    <view key="view" contentMode="scaleToFill" id="xpT-9d-mEX">
+                    <view key="view" contentMode="scaleToFill" id="xpT-9d-mEX" customClass="Draw2D" customModule="QRCodeReader" customModuleProvider="target">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <view alpha="0.80000000000000004" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="qba-q7-QE8">
+                            <view clipsSubviews="YES" alpha="0.80000000000000004" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="qba-q7-QE8">
                                 <rect key="frame" x="0.0" y="0.0" width="375" height="55"/>
                                 <subviews>
                                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Scan" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="zmi-Qa-jYL">
@@ -80,6 +80,16 @@
                                             <segue destination="L9X-1P-o6Q" kind="unwind" unwindAction="unwindToHomeScreenWithSegue:" id="Wgu-Jv-Obf"/>
                                         </connections>
                                     </button>
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="CV2-zn-c3V">
+                                        <rect key="frame" x="288" y="22" width="79" height="25"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="79" id="eJd-ul-ky4"/>
+                                        </constraints>
+                                        <state key="normal" title="Recalibrate"/>
+                                        <connections>
+                                            <action selector="performRecalibration:" destination="B0K-bi-dGX" eventType="touchUpInside" id="obZ-ee-Zmc"/>
+                                        </connections>
+                                    </button>
                                 </subviews>
                                 <color key="backgroundColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
                                 <constraints>
@@ -88,7 +98,10 @@
                                     <constraint firstAttribute="bottom" secondItem="zmi-Qa-jYL" secondAttribute="bottom" constant="8" id="UwX-m2-sap"/>
                                     <constraint firstItem="zmi-Qa-jYL" firstAttribute="centerX" secondItem="qba-q7-QE8" secondAttribute="centerX" id="Vfy-Ao-kCf"/>
                                     <constraint firstItem="U4l-Jj-Ec8" firstAttribute="top" secondItem="qba-q7-QE8" secondAttribute="top" constant="24" id="YGS-tG-xGX"/>
+                                    <constraint firstItem="CV2-zn-c3V" firstAttribute="top" secondItem="qba-q7-QE8" secondAttribute="top" constant="22" id="ZFP-3t-beh"/>
+                                    <constraint firstAttribute="trailing" secondItem="CV2-zn-c3V" secondAttribute="trailing" constant="8" id="c14-Vg-hoe"/>
                                     <constraint firstAttribute="bottom" secondItem="U4l-Jj-Ec8" secondAttribute="bottom" constant="13" id="m6j-Lg-w0D"/>
+                                    <constraint firstAttribute="bottom" secondItem="CV2-zn-c3V" secondAttribute="bottom" constant="8" id="net-zn-g9O"/>
                                 </constraints>
                             </view>
                             <label opaque="NO" userInteractionEnabled="NO" alpha="0.59999999999999998" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="No QR code is detected" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="AAl-zJ-uU4">
@@ -101,6 +114,14 @@
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
+                            <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" hidesWhenStopped="YES" style="whiteLarge" translatesAutoresizingMaskIntoConstraints="NO" id="mhe-RY-gWW">
+                                <rect key="frame" x="169" y="315" width="37" height="37"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </activityIndicatorView>
+                            <progressView opaque="NO" alpha="0.59999999999999998" contentMode="scaleToFill" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bfK-6l-n45">
+                                <rect key="frame" x="0.0" y="55" width="375" height="2"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </progressView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
@@ -113,14 +134,35 @@
                         </constraints>
                     </view>
                     <connections>
+                        <outlet property="activityIndicator" destination="mhe-RY-gWW" id="AoA-7B-MMt"/>
                         <outlet property="messageLabel" destination="AAl-zJ-uU4" id="2vr-bb-KNQ"/>
+                        <outlet property="progressLabel" destination="bfK-6l-n45" id="X6O-XU-RgL"/>
+                        <outlet property="recalibrateButton" destination="CV2-zn-c3V" id="nYw-9N-Q9A"/>
                         <outlet property="topbar" destination="qba-q7-QE8" id="jVg-Hf-y26"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="VfO-3l-5Cr" userLabel="First Responder" sceneMemberID="firstResponder"/>
                 <exit id="L9X-1P-o6Q" userLabel="Exit" sceneMemberID="exit"/>
             </objects>
-            <point key="canvasLocation" x="977" y="112"/>
+            <point key="canvasLocation" x="976.79999999999995" y="111.99400299850076"/>
+        </scene>
+        <!--View Controller-->
+        <scene sceneID="mhi-Ch-0zB">
+            <objects>
+                <viewController id="ihJ-Wz-F6q" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="4rf-zc-Xlf"/>
+                        <viewControllerLayoutGuide type="bottom" id="pPs-is-BLf"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="iJh-JI-Ial" customClass="Draw2D" customModule="QRCodeReader" customModuleProvider="target">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="mUr-Eg-T9K" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="910" y="897"/>
         </scene>
     </scenes>
     <resources>
