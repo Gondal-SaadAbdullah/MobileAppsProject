@@ -1,18 +1,9 @@
-//
-//  QRScannerController.swift
-//  QRCodeReader
-//
-//  Created by Simon Ng on 13/10/2016.
-//  Copyright © 2016 AppCoda. All rights reserved.
-//
-
 import UIKit
 import AVFoundation
-import MapKit
-import CoreLocation
 
-class QRScannerController: UIViewController, AVCaptureMetadataOutputObjectsDelegate, CLLocationManagerDelegate {
 
+class QRScannerController: UIViewController, AVCaptureMetadataOutputObjectsDelegate {
+    
     @IBOutlet var messageLabel:UILabel!
     @IBOutlet var topbar: UIView!
     
@@ -20,15 +11,10 @@ class QRScannerController: UIViewController, AVCaptureMetadataOutputObjectsDeleg
     var videoPreviewLayer:AVCaptureVideoPreviewLayer?
     var qrCodeFrameView:UIView?
     
-    let locationManager = CLLocationManager()
-    
     var coveredPaths = [String: Int]()
-    var longitude : [CLLocationDegrees] = []
-    var latitude : [CLLocationDegrees] = []
+    
     var count : Int = 0
     var hasPreviousValue : Bool = false
-    var longiTemp : CLLocationDegrees = 0.0
-    var latiTemp : CLLocationDegrees = 0.0
     @IBOutlet weak var imageViewCam: UIImageView!
     var calibrated : Bool = false
     @IBOutlet weak var progressLabel: UIProgressView!
@@ -42,6 +28,46 @@ class QRScannerController: UIViewController, AVCaptureMetadataOutputObjectsDeleg
     
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     
+    var modelName: String {
+        var systemInfo = utsname()
+        uname(&systemInfo)
+        let machineMirror = Mirror(reflecting: systemInfo.machine)
+        let identifier = machineMirror.children.reduce("") { identifier, element in
+            guard let value = element.value as? Int8, value != 0 else { return identifier }
+            return identifier + String(UnicodeScalar(UInt8(value)))
+        }
+        
+        switch identifier {
+        case "iPod5,1":                                 return "iPod Touch 5"
+        case "iPod7,1":                                 return "iPod Touch 6"
+        case "iPhone3,1", "iPhone3,2", "iPhone3,3":     return "iPhone 4"
+        case "iPhone4,1":                               return "iPhone 4s"
+        case "iPhone5,1", "iPhone5,2":                  return "iPhone 5"
+        case "iPhone5,3", "iPhone5,4":                  return "iPhone 5c"
+        case "iPhone6,1", "iPhone6,2":                  return "iPhone 5s"
+        case "iPhone7,2":                               return "iPhone 6"
+        case "iPhone7,1":                               return "iPhone 6 Plus"
+        case "iPhone8,1":                               return "iPhone 6s"
+        case "iPhone8,2":                               return "iPhone 6s Plus"
+        case "iPhone9,1", "iPhone9,3":                  return "iPhone 7"
+        case "iPhone9,2", "iPhone9,4":                  return "iPhone 7 Plus"
+        case "iPhone8,4":                               return "iPhone SE"
+        case "iPad2,1", "iPad2,2", "iPad2,3", "iPad2,4":return "iPad 2"
+        case "iPad3,1", "iPad3,2", "iPad3,3":           return "iPad 3"
+        case "iPad3,4", "iPad3,5", "iPad3,6":           return "iPad 4"
+        case "iPad4,1", "iPad4,2", "iPad4,3":           return "iPad Air"
+        case "iPad5,3", "iPad5,4":                      return "iPad Air 2"
+        case "iPad2,5", "iPad2,6", "iPad2,7":           return "iPad Mini"
+        case "iPad4,4", "iPad4,5", "iPad4,6":           return "iPad Mini 2"
+        case "iPad4,7", "iPad4,8", "iPad4,9":           return "iPad Mini 3"
+        case "iPad5,1", "iPad5,2":                      return "iPad Mini 4"
+        case "iPad6,3", "iPad6,4", "iPad6,7", "iPad6,8":return "iPad Pro"
+        case "AppleTV5,3":                              return "Apple TV"
+        case "i386", "x86_64":                          return "Simulator"
+        default:                                        return identifier
+        }
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -49,17 +75,17 @@ class QRScannerController: UIViewController, AVCaptureMetadataOutputObjectsDeleg
         {
             calibrated = true;
         }
-
+        
         // Setting Pixel Width for iPad Air 1
-        defaultFocalPoints[UserDefaults.standard.string(forKey: "modelName")!] = 456
+        defaultFocalPoints[modelName] = 456
         
         // Get an instance of the AVCaptureDevice class to initialize a device object and provide the video as the media type parameter.
         let captureDevice = AVCaptureDevice.defaultDevice(withMediaType: AVMediaTypeVideo)
         
         if(!calibrated)
         {
-         DispatchQueue.main.async {
-            self.displayMyAlertMessage(userMessage: "Please place the device at the marker and scan the QR code", heading: "Device not calibrated", buttonMessage : "Continue")
+            DispatchQueue.main.async {
+                self.displayAlertMessage(userMessage: "Please place the device at the marker and scan the QR code", heading: "Device not calibrated", buttonMessage : "Continue")
             }
         }
         
@@ -90,9 +116,7 @@ class QRScannerController: UIViewController, AVCaptureMetadataOutputObjectsDeleg
             view.layer.addSublayer(progressLabel.layer)
             activityIndicator.center = view.center
             progressLabel.layer.frame.size.width = view.layer.bounds.width
-//            recalibrateButton.center = view.center
             
-            //imageViewCam.layer.addSublayer(videoPreviewLayer!)
             
             // Start video capture.
             captureSession?.startRunning()
@@ -101,24 +125,17 @@ class QRScannerController: UIViewController, AVCaptureMetadataOutputObjectsDeleg
             view.bringSubview(toFront: messageLabel)
             view.bringSubview(toFront: topbar)
             
+            // Initialize QR Code Frame to highlight the QR code
+            qrCodeFrameView = UIView()
             
-            
-            //if (!calibrated && self.confirmCalibration)
-           // {
-                // Initialize QR Code Frame to highlight the QR code
-                qrCodeFrameView = UIView()
+            if let qrCodeFrameView = qrCodeFrameView {
                 
-                if let qrCodeFrameView = qrCodeFrameView {
-                    
-                    qrCodeFrameView.layer.borderColor = UIColor.green.cgColor
-                    qrCodeFrameView.layer.borderWidth = 2
-                    
-                    view.addSubview(qrCodeFrameView)
-                    view.bringSubview(toFront: qrCodeFrameView)
-                    //self.messageLabel.text = "height is :: \(qrCodeFrameView.layer.bounds.height)"
-                }
-          //  }
-            
+                qrCodeFrameView.layer.borderColor = UIColor.green.cgColor
+                qrCodeFrameView.layer.borderWidth = 2
+                
+                view.addSubview(qrCodeFrameView)
+                view.bringSubview(toFront: qrCodeFrameView)
+            }
             
         } catch {
             // If any error occurs, simply print it out and don't continue any more.
@@ -129,25 +146,19 @@ class QRScannerController: UIViewController, AVCaptureMetadataOutputObjectsDeleg
     
     @IBAction func performRecalibration(_ sender: Any) {
         
-        self.calibrated = false
-        self.progressLabel.setProgress(0, animated: true)
-        self.calibCount = 0
-        self.listForCalib.removeAll()
+        self.resetCalibData()
         
         DispatchQueue.main.async {
-            self.displayMyAlertMessage(userMessage: "Please place the device at the marker and scan the QR code", heading: "Start Calibration", buttonMessage : "Continue")
+            self.displayAlertMessage(userMessage: "Please place the device at the marker and scan the QR code", heading: "Start Calibration", buttonMessage : "Continue")
         }
     }
     
-    func displayMyAlertMessage(userMessage : String, heading : String, buttonMessage : String)
+    func displayAlertMessage(userMessage : String, heading : String, buttonMessage : String)
     {
         let myAlert = UIAlertController(title: heading, message: userMessage, preferredStyle: UIAlertControllerStyle.alert);
-        
-        
         let okAction = UIAlertAction(title: buttonMessage, style: UIAlertActionStyle.default, handler: doSomething);
         
         myAlert.addAction(okAction)
-        
         self.present(myAlert, animated: true, completion: nil);
     }
     
@@ -156,100 +167,92 @@ class QRScannerController: UIViewController, AVCaptureMetadataOutputObjectsDeleg
         activityIndicator.startAnimating()
     }
     
-    
-    func updatingLocation()
-    {
-        // Ask for Authorisation from the User.
-        self.locationManager.requestAlwaysAuthorization()
-        
-        // For use in foreground
-        self.locationManager.requestWhenInUseAuthorization()
-        
-        if CLLocationManager.locationServicesEnabled() {
-            locationManager.delegate = self
-            locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
-            locationManager.startUpdatingLocation()
-        }
-    }
-    
     func makeProgress()
     {
         progressLabel.setProgress(Float(calibCount/10), animated: true)
         
+        //When maximum calibration attempts are achieved
         if(calibCount == 10)
         {
             calibrated = true
             var avgSizeInPixels : Float = 0
             
+            //Calculate average pixel size received from each calibration attempt
             for i in 0..<10
-                {
+            {
                 avgSizeInPixels += Float(listForCalib[i])
             }
             avgSizeInPixels = avgSizeInPixels / 10
             
-            let pixelWidth : Float = defaultFocalPoints[UserDefaults.standard.string(forKey: "modelName")!]!
+            let pixelWidth : Float = defaultFocalPoints[modelName]!
             
-            if(abs(avgSizeInPixels - pixelWidth) > 90)
-            {
+            //If calibration is performed at a distance greater than the allowed threshold
+            //Reinitiate the calibration cycle
+            if(abs(avgSizeInPixels - pixelWidth) > 90) {
                 DispatchQueue.main.async {
-                    self.calibrated = false
-                    self.progressLabel.setProgress(0, animated: true)
-                    self.calibCount = 0
-                    self.listForCalib.removeAll()
-                    self.displayMyAlertMessage(userMessage: "Please make sure you stand at the marker and reduce the device movement", heading: "Recalibrate", buttonMessage: "Continue")
+                    self.resetCalibData()
+                    self.displayAlertMessage(userMessage: "Please make sure you stand at the marker and reduce the device movement", heading: "Recalibrate", buttonMessage: "Continue")
                     
                 }
             }
             
             let focalDistance = calculateFocalDistance(avgSizeInPixels : avgSizeInPixels)
+            print ("focal distance ::::::: \(focalDistance)")
+            
+            //Successful calibration - store Focal Distance in application storage
             UserDefaults.standard.set(focalDistance, forKey: "focalDistance")
         }
     }
     
+    func resetCalibData()
+    {
+        self.calibrated = false
+        self.progressLabel.setProgress(0, animated: true)
+        self.calibCount = 0
+        self.listForCalib.removeAll()
+    }
+    
+    //Distance calculation
     func calculateDistance(sizeInPixels : Float) -> Float
     {
         let focalDistance = UserDefaults.standard.float(forKey: "focalDistance")
         return (widthOfPhysicalObject * focalDistance)/sizeInPixels
     }
     
+    //Focal distance calculation
     func calculateFocalDistance(avgSizeInPixels : Float) -> Float
     {
         let calibrationDistance : Float = 61
-        
         let focalDistance : Float = (avgSizeInPixels * calibrationDistance) / widthOfPhysicalObject
         
         return focalDistance
     }
     
-
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
     }
     
-    
     func captureOutput(_ captureOutput: AVCaptureOutput!, didOutputMetadataObjects metadataObjects: [Any]!, from connection: AVCaptureConnection!) {
         
-        // Check if the metadataObjects array is not nil and it contains at least one object.
+        // Check if QRCode is detected - if not end processing for this callback
         if metadataObjects == nil || metadataObjects.count == 0 {
             qrCodeFrameView?.frame = CGRect.zero
             messageLabel.text = "No QR code is detected"
             return
         }
         
-        
-        // Get the metadata object.
         let metadataObj = metadataObjects[0] as! AVMetadataMachineReadableCodeObject
         
         if metadataObj.type == AVMetadataObjectTypeQRCode {
             
-            // If the found metadata is equal to the QR code metadata then update the status label's text and set the bounds
             let barCodeObject = videoPreviewLayer?.transformedMetadataObject(for: metadataObj)
             qrCodeFrameView?.frame = barCodeObject!.bounds
             
+            //If a QRCode is read with a string value
             if metadataObj.stringValue != nil {
-                messageLabel.text = metadataObj.stringValue
                 
-                
+                //If in calibration process
                 if (!calibrated && calibCount <= 10 && confirmCalibration)
                 {
                     listForCalib.append(qrCodeFrameView!.layer.bounds.width)
@@ -257,47 +260,21 @@ class QRScannerController: UIViewController, AVCaptureMetadataOutputObjectsDeleg
                     makeProgress()
                     
                 }
+                
+                //If maximum calibration attempts are achieved
                 if calibCount == 10
                 {
                     activityIndicator.stopAnimating()
                     calibrated = true
                 }
                 
+                //If calibrated report distance from the detected QRCode
                 if(calibrated)
                 {
-                    messageLabel.text = ">> \(calculateDistance(sizeInPixels : Float(qrCodeFrameView!.layer.bounds.width)))"
+                    messageLabel.text = "\(calculateDistance(sizeInPixels : Float(qrCodeFrameView!.layer.bounds.width)) / 100) meters from \(metadataObj.stringValue!)"
                 }
                 
             }
         }
     }
-    
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        
-        let locValue:CLLocationCoordinate2D = manager.location!.coordinate
-        longitude.append(locValue.longitude)
-        latitude.append(locValue.latitude)
-        
-        latiTemp = locValue.latitude;
-        longiTemp = locValue.longitude;
-        
-        messageLabel.text = "locations = \(locValue.longitude), \(locValue.latitude), course = \(manager.location!.course)"
-        
-        showLocationDiff()
-    }
-    
-    func showLocationDiff()
-    {
-        //messageLabel.text = "locations = \(longitude[longitude.count] - longitude[longitude.count - 1])"
-        if(longitude.count > 1)
-        {
-            print("longitude = \((longitude[longitude.count - 1] - longitude[longitude.count - 2]) * 10000), latitude = \((latitude[latitude.count - 1] - latitude[latitude.count - 2]) * 10000)")
-        }
-        
-        
-        
-    }
-    
-    
-
 }
