@@ -217,6 +217,13 @@ class QRScannerController: UIViewController, AVCaptureMetadataOutputObjectsDeleg
                     
                 }
                 
+                //If maximum calibration attempts are achieved
+                if calibCount == 10
+                {
+                    activityIndicator.stopAnimating()
+                    calibrated = true
+                }
+                
                 //If calibrated report distance from the detected QRCode
                 if(calibrated)
                 {
