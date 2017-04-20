@@ -6,28 +6,24 @@ class QRScannerController: UIViewController, AVCaptureMetadataOutputObjectsDeleg
     
     @IBOutlet var messageLabel:UILabel!
     @IBOutlet var topbar: UIView!
+    @IBOutlet weak var imageViewCam: UIImageView!
+    @IBOutlet weak var progressLabel: UIProgressView!
+    @IBOutlet weak var recalibrateButton: UIButton!
+    @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     
     var captureSession:AVCaptureSession?
     var videoPreviewLayer:AVCaptureVideoPreviewLayer?
     var qrCodeFrameView:UIView?
     
-    var coveredPaths = [String: Int]()
-    
-    var count : Int = 0
     var hasPreviousValue : Bool = false
-    @IBOutlet weak var imageViewCam: UIImageView!
     var calibrated : Bool = false
-    @IBOutlet weak var progressLabel: UIProgressView!
     var confirmCalibration : Bool = false
     var listForCalib : [CGFloat] = []
     var calibCount : Int = 0
-    var defaultFocalPoints = [String: Float]()
     var allowedThreshold : Float = 7.62
     
-    @IBOutlet weak var recalibrateButton: UIButton!
-    let widthOfPhysicalObject : Float = 19.5
+    let widthOfPhysicalObject : Float = 19.1
     
-    @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -133,6 +129,8 @@ class QRScannerController: UIViewController, AVCaptureMetadataOutputObjectsDeleg
         if(calibCount == 10)
         {
             calibrated = true
+            activityIndicator.stopAnimating()
+            
             var avgSizeInPixels : Float = 0
             
             //Calculate average pixel size received from each calibration attempt
@@ -211,19 +209,12 @@ class QRScannerController: UIViewController, AVCaptureMetadataOutputObjectsDeleg
             if metadataObj.stringValue != nil {
                 
                 //If in calibration process
-                if (!calibrated && calibCount <= 10 && confirmCalibration)
+                if (!calibrated && confirmCalibration)
                 {
                     listForCalib.append(qrCodeFrameView!.layer.bounds.width)
                     calibCount += 1
                     makeProgress()
                     
-                }
-                
-                //If maximum calibration attempts are achieved
-                if calibCount == 10
-                {
-                    activityIndicator.stopAnimating()
-                    calibrated = true
                 }
                 
                 //If calibrated report distance from the detected QRCode
